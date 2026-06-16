@@ -1,3 +1,13 @@
+# Build folders
 bin/
 obj/
+
+# User-specific files
 *.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS-specific files
+.DS_Store
+Thumbs.db

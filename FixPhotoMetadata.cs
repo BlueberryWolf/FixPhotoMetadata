@@ -32,7 +32,7 @@ namespace FixPhotoMetadata
 
         public override void OnEngineInit()
         {
-            Harmony harmony = new Harmony("com.blue.resonite.fixphotometadata");
+            Harmony harmony = new Harmony("com.github.BlueberryWolf.FixPhotoMetadata");
             harmony.PatchAll();
         }
 
