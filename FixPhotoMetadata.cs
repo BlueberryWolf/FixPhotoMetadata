@@ -12,7 +12,7 @@ namespace FixPhotoMetadata
     {
         public override string Name => "FixPhotoMetadata";
         public override string Author => "BlueberryWolf";
-        public override string Version => "1.0.0";
+        public override string Version => "1.0.1";
         public override string Link => "https://github.com/BlueberryWolf/FixPhotoMetadata";
 
         [AutoRegisterConfigKey]
@@ -194,10 +194,21 @@ namespace FixPhotoMetadata
                     float tanHalfFov = MathF.Tan(fovRad / 2f);
                     floatQ qInv = new floatQ(-metadata.Rotation.x, -metadata.Rotation.y, -metadata.Rotation.z, metadata.Rotation.w);
 
+                    var tagsSlot = __instance.Slot.FindChild("PhotoMetadata_Tags");
+                    if (tagsSlot == null)
+                    {
+                        tagsSlot = __instance.Slot.AddSlot("PhotoMetadata_Tags", true);
+                        var space = tagsSlot.AttachComponent<DynamicVariableSpace>();
+                        space.SpaceName.Value = "PhotoMetadata";
+                    }
+                    tagsSlot.PersistentSelf = true;
+
                     for (int i = 0; i < __instance.UserInfos.Count; i++)
                     {
                         var userInfo = __instance.UserInfos[i];
                         if (userInfo.User.Target == null) continue;
+                        var userId = userInfo.User.Target.UserID;
+                        if (userId == null) continue;
 
                         float3 headPos = userInfo.HeadPosition.Value;
                         float3 relativePos = headPos - metadata.Position;
@@ -257,13 +268,30 @@ namespace FixPhotoMetadata
                         {
                             lock (OccludedUserIds)
                             {
-                                var userId = userInfo.User.Target.UserID;
-                                if (userId != null)
-                                {
-                                    OccludedUserIds.Add(userId);
-                                }
+                                OccludedUserIds.Add(userId);
                             }
                         }
+
+                        var userSlot = tagsSlot.FindChild(userId);
+                        if (userSlot == null)
+                        {
+                            userSlot = tagsSlot.AddSlot(userId, true);
+                        }
+                        userSlot.PersistentSelf = true;
+
+                        float userScale = 1.0f;
+                        if (userInfo.User.Target.Root != null)
+                        {
+                            userScale = userInfo.User.Target.Root.Slot.GlobalScale.x;
+                        }
+
+                        var scaleVar = userSlot.AttachComponent<DynamicValueVariable<float>>();
+                        scaleVar.VariableName.Value = "PhotoMetadata/" + userId + "/headScale";
+                        scaleVar.Value.Value = userScale;
+
+                        var viewVar = userSlot.AttachComponent<DynamicValueVariable<bool>>();
+                        viewVar.VariableName.Value = "PhotoMetadata/" + userId + "/isInView";
+                        viewVar.Value.Value = visible;
                     }
                 }
                 catch (Exception e)
@@ -298,7 +326,15 @@ namespace FixPhotoMetadata
 
                     var ns = XNamespace.Get("http://ns.baru.dev/resonite-ss-ext/2.0/");
                     var scaleProp = userInfo.GetType().GetProperty("UserScale");
-                    float userScale = scaleProp != null ? (float)scaleProp.GetValue(userInfo) : 1.0f;
+                    float userScale = 1.0f;
+                    if (scaleProp != null)
+                    {
+                        var scaleVal = scaleProp.GetValue(userInfo);
+                        if (scaleVal is float f)
+                        {
+                            userScale = f;
+                        }
+                    }
 
                     element.SetAttributeValue(ns + "UI-HeadScale", userScale.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     element.SetAttributeValue(ns + "UI-IsInView", (!isOccluded).ToString().ToLower());

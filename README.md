@@ -7,13 +7,14 @@ A Resonite Mod using Harmony to fix two bugs in the game's photo metadata collec
 
 ## Dynamic Optional Integrations
 
-### GalleVR / ResoniteScreenshotExtensions (aka "ScreenshotExtensionsExtensions" LOL)
+### GalleVR / ResoniteScreenshotExtensions (Optional) (aka "ScreenshotExtensionsExtensions" LOL)
 
 If `ResoniteScreenshotExtensions` is also installed/loaded, this mod dynamically patches it at runtime (without static dependencies) to add extra metadata fields:
 
 - **Visibility & Occlusion Check**: Checks if players are in the camera view and runs raycasts to filter out players hidden behind walls/objects (ignoring triggers, camera slots, and self-avatar colliders).
 - **Head Bounding Box Scaling**: Injects `UI-HeadScale` and `UI-IsInView` as separate attributes.
 - **Viewers Compatibility**: Keeping the attributes separate means `UI-HeadPosition` remains a standard `[x; y; z]` value, so it doesn't break other XMP metadata viewers.
+- **In-Game Dynamic Variables**: Attaches a `DynamicVariableSpace` called `PhotoMetadata` on a child slot named `PhotoMetadata_Tags` on the photo object itself. Visibility and scale variables are written for each user ID (e.g. `PhotoMetadata/<userId>/headScale` and `PhotoMetadata/<userId>/isInView`) so other in-game tools/mods can read them.
 
 This can be disabled in the mod settings under `InjectOcclusion`.
 
